@@ -1,0 +1,37 @@
+name: Erratum
+description: Signaler une erreur dans un article ou une simulation publiée
+title: "Erratum : "
+labels: [erratum]
+body:
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version concernée
+      options: [v0.1, v1.1, v2.0, simulations]
+    validations:
+      required: true
+  - type: input
+    id: lieu
+    attributes:
+      label: Section, équation ou proposition
+      placeholder: "ex. Proposition 6, équation (9)"
+    validations:
+      required: true
+  - type: textarea
+    id: constat
+    attributes:
+      label: Constat
+      description: Ce qui est affirmé et pourquoi c'est faux.
+    validations:
+      required: true
+  - type: textarea
+    id: preuve
+    attributes:
+      label: Démonstration ou contre-exemple
+      description: Calcul, contre-exemple numérique ou code reproductible.
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Correction proposée (facultatif)

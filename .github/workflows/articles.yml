@@ -1,0 +1,51 @@
+name: Articles
+
+on:
+  pull_request:
+    paths: ["article-v2.0/**", ".github/workflows/articles.yml"]
+  push:
+    branches: [main]
+    paths: ["article-v2.0/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compiler:
+    name: Compiler les articles (FR + EN)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Présence des sources
+        id: src
+        run: echo "ok=$([ -f article-v2.0/CTP_Core_v2.0_FR.tex ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Compiler
+        if: steps.src.outputs.ok == 'true'
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: article-v2.0
+          root_file: |
+            CTP_Core_v2.0_FR.tex
+            CTP_Core_v2.0_EN.tex
+
+      - name: Publier l'aperçu
+        if: steps.src.outputs.ok == 'true'
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: apercu-articles-pdf
+          path: article-v2.0/*.pdf
+
+      - name: Résumé
+        run: |
+          {
+            echo "## Articles"
+            if [ "${{ steps.src.outputs.ok }}" = "true" ]; then
+              echo "Compilation réussie. Aperçu : [PDF FR + EN](${{ steps.upload.outputs.artifact-url }})"
+            else
+              echo "Aucune source d'article dans cette branche : étape ignorée."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

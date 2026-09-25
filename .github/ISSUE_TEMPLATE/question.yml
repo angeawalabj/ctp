@@ -1,0 +1,14 @@
+name: Question
+description: Question sur le modèle, les preuves ou les résultats
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: input
+    id: lieu
+    attributes:
+      label: Partie de l'article concernée (facultatif)

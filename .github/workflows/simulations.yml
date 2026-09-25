@@ -1,0 +1,71 @@
+name: Simulations
+
+on:
+  pull_request:
+    paths: ["simulations-v2.0/**", "article-v2.0/figures/**", ".github/workflows/simulations.yml"]
+  push:
+    branches: [main]
+    paths: ["simulations-v2.0/**", "article-v2.0/figures/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reproduire:
+    name: Reproduire les résultats
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Présence du script
+        id: src
+        run: echo "ok=$([ -f simulations-v2.0/ctp_core_v2_experiments.py ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: steps.src.outputs.ok == 'true'
+        with:
+          python-version: "3.13"
+
+      - name: Dépendances
+        if: steps.src.outputs.ok == 'true'
+        run: pip install -r simulations-v2.0/requirements.txt
+
+      - name: Retracer toutes les figures depuis resultats_v2.json
+        if: steps.src.outputs.ok == 'true'
+        run: python simulations-v2.0/ctp_core_v2_experiments.py figures
+
+      - name: Recalculer E3 et comparer aux résultats publiés
+        if: steps.src.outputs.ok == 'true'
+        run: |
+          python simulations-v2.0/ctp_core_v2_experiments.py /tmp/repro E3
+          python - <<'PY'
+          import json, sys
+          new = json.load(open("/tmp/repro/resultats_v2.json"))["E3"]
+          ref = json.load(open("article-v2.0/figures/resultats_v2.json"))["E3"]
+          if new != ref:
+              sys.exit("E3 ne se reproduit pas à l'identique")
+          print("E3 reproduit à l'identique")
+          PY
+
+      - name: Publier l'aperçu des figures
+        if: steps.src.outputs.ok == 'true'
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: apercu-figures
+          path: article-v2.0/figures/*.pdf
+
+      - name: Résumé des résultats
+        if: steps.src.outputs.ok == 'true'
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          r = json.load(open("article-v2.0/figures/resultats_v2.json"))
+          print("## Simulations\n")
+          print("E3 reproduit à l'identique. Aperçu : [figures](${{ steps.upload.outputs.artifact-url }})\n")
+          print("| Configuration (E4) | honnêtes | colludeurs | fraude acceptée |")
+          print("|---|---|---|---|")
+          for c, v in r["E4"].items():
+              print(f"| {c} | {v['honest'][0]:.2f} | {v['colluder'][0]:.2f} | {100*v['fraude_passee']:.1f} % |")
+          PY
