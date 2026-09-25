@@ -1,286 +1,129 @@
-# CommunityTrust Protocol — CTP v0.1
+# CommunityTrust Protocol — CTP Core v2.0
 
 > *"Je suis parce que nous sommes"* — Philosophie Ubuntu, Afrique australe
 >
 > *"I am because we are"*
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20031237.svg)](https://doi.org/10.5281/zenodo.20031237)
+[![DOI v0.1](https://zenodo.org/badge/DOI/10.5281/zenodo.20031237.svg)](https://doi.org/10.5281/zenodo.20031237)
 [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 [![ORCID](https://img.shields.io/badge/ORCID-0009--0006--0220--3006-green.svg)](https://orcid.org/0009-0006-0220-3006)
-[![Status](https://img.shields.io/badge/Status-v0.1%20Founding%20Document-blue.svg)]()
+[![Status](https://img.shields.io/badge/Status-v2.0%20preprint%2C%20not%20peer%20reviewed-orange.svg)]()
 
-**Auteur / Author:** Ange AWALA  
+**Author:** Ange AWALA  
 **Organisation:** OpenScience Community  
 **Contact:** [ange.awala.bj@gmail.com](mailto:ange.awala.bj@gmail.com) · [opensciencec@gmail.com](mailto:opensciencec@gmail.com)
+
+[Version française](README_fr.md)
 
 ---
 
 ## What is CTP?
 
-Existing trust systems measure **popularity**, **wealth**, or **institutional status**.
+Existing trust systems measure **popularity**, **wealth**, or **institutional status**. CTP measures **behavioural reliability over time**.
 
-CTP measures something different: **behavioral reliability over time**, independently of any pre-existing financial or social capital.
+Inspired by African tontines — where collective trust replaces bank guarantees — CTP is a reputation mechanism in which a contribution only counts after approval by a randomly drawn panel of **witnesses who stake their own score**.
 
-Inspired by African tontines — decentralized community financing systems where collective trust replaces bank guarantees — CTP formalizes a **universal reputation engine** applicable to any community-based system:
+CTP is a **parameterised framework**, not a universal engine: the right parameters depend on the nature of contributions, witness accuracy and the cost of an identity. Each application must be calibrated and evaluated.
 
-- Social networks
-- Decentralized autonomous organizations (DAOs)
-- Knowledge cooperatives
-- Micro-finance systems
-- Scientific communities
+> **v2.0 corrects demonstrable errors in v0.1 and v1.1** (anti-collusion condition, missing incentives, audit that spared coalitions, simulation unable to test collusion…). See the erratum in the article (Appendix A) and issues [#2–#9](https://github.com/opensciencec/ctp/issues?q=label%3Aerratum).
 
 ---
 
-## The Core Idea
+## The model (v2.0)
 
-In a traditional tontine, a group contributes periodically to a common pool. The system works without legal contracts or bank guarantees — **solely on reputation and social pressure**.
-
-CTP formalizes this: every member has a **TrustScore** τ ∈ [0,1] that:
-
-- **Rises slowly** through validated contributions (η = 0.05)
-- **Falls fast** after a default (κ = 0.15 >> η)
-- **Depreciates** through inactivity (δ = 0.02)
-- **Cannot be bought, sold, or transferred**
-
-> The TrustScore is built only through observed behavior in time.
-
----
-
-## Architecture
+Each member has a score τ ∈ [0,1]:
 
 ```
-Meta-Node (global rules, immutable)
-    │
-    ├── Node A (tontine, neighborhood)
-    │       ├── Member 1 — τ = 0.87
-    │       ├── Member 2 — τ = 0.54
-    │       └── Member 3 — τ = 0.12
-    │
-    ├── Node B (scientific community)
-    │       ├── Member 4 — τ = 0.93
-    │       └── Member 5 — τ = 0.71
-    │
-    └── Node C (DAO governance)
-            └── ...
+τ(t+1) = clip(τ + G + R − L − S − D − W, 0, 1)
 ```
 
-**Five primitive concepts — immutable:**
-
-| Concept | Definition |
+| Term | Meaning |
 |---|---|
-| **Signal** | Any raw act freely produced by a member |
-| **Contribution** | A Signal collectively validated by Witnesses |
-| **Witness** | A member who stakes their reputation to validate |
-| **TrustScore** | Behavioral reputation score τ ∈ [0,1] |
-| **Node** | A community implementing CTP |
+| **G** = η · q(s) | author's gain for an accepted, non-sanctioned contribution |
+| **R** = η_W / k | witness reward for voting with the outcome (paid only to active members) |
+| **L** = κ | commitment default |
+| **S** = κ_s | sanction of the author of a sanctioned contribution |
+| **D** = δ · τ | depreciation when no accepted contribution |
+| **W** = φ · τ | sanction of each witness who approved a sanctioned or decoy signal |
+
+Plus: uniform audit with **counter-audit**, **adaptive panel** (min. 3 witnesses), and **decoy signals** against rubber-stamping.
+
+**Recommended parameters (v2.1), derived from closed-form conditions:**
+
+| η | κ | η_W | κ_s | φ | p_a | k_min | θ | h | δ |
+|---|---|---|---|---|---|---|---|---|---|
+| 0.02 | 0.35 | 0.005 | 0.10 | 0.30 | 0.15 | 5 | 2/3 | 0.05 | 0.02 |
 
 ---
 
-## Mathematical Model
+## Key results (simulation, up to 200 seeds, 95 % CI)
 
-The TrustScore evolves according to **Equation (1)**:
-
-```
-τ_{i,j}(t+1) = clip(τ_{i,j}(t) + G - L - D - W, 0, 1)
-```
-
-Where:
-
-| Force | Equation | Role |
+| | v1.1 rules | v2.1 |
 |---|---|---|
-| **G** (Gain) | η · Σ q(s_k) | Reward for validated contributions |
-| **L** (Loss) | κ · 1_default | Penalty for defaults |
-| **D** (Depreciation) | δ · τ · 1_inactive | Inactivity erosion |
-| **W** (Witness cost) | φ · Σ τ/\|W(s)\| | Cost for poor validation |
+| Default tolerated | ≈ 1 period in 4 | ≈ 1 period in 20 |
+| Colluders' final score (30 % coalition) | 0.58 (above start) | 0.06 |
+| Frauds accepted | 2.5 % | 0.5 % |
+| Adaptive agents: share who cheat | 95 % (collapse) | ≈ 7 % (exploration level) |
 
-**Contribution quality** q(s) = τ̄_W · ρ(s) — weighted by Witness reputation.
+- Audit alone lets **85 %** of frauds through at the same audit rate; matching the witness panel would require auditing ~99 % of contributions.
+- Without witness accountability, adaptive agents collapse (92 % fraud).
+- **Applicability condition:** witnesses must judge accurately. For **tontines**, payments are verifiable, so the recommended instantiation uses **no witnesses**: operator-verified payments, score-based rotation order, sponsorship and exclusion.
 
-**Adaptive threshold** k_j = max(3, floor(0.20 · |M_j|)) — scales with community size.
-
----
-
-## Game Theory
-
-Three strategic behaviors are analyzed and neutralized:
-
-| Behavior | Mechanism | Condition |
-|---|---|---|
-| Free rider | Depreciation δ + value of rights | f(τ) real and increasing |
-| Witness collusion | Accountability φ | φ ≥ 3η |
-| Strategic deserter | Migration penalty μ | μ ∈ [0.6, 0.8] |
-
-**Result:** honest behavior strictly dominates all strategic alternatives under recommended parameters.
+**Limits:** no field data yet ([#11](https://github.com/opensciencec/ctp/issues/11)), not peer reviewed ([#12](https://github.com/opensciencec/ctp/issues/12)).
 
 ---
 
-## Monte Carlo Validation
-
-1,000 simulations × 52 periods — 12 members per Node:
-
-| Behavior | Mean score | Status |
-|---|---|---|
-| Honest | 0.9231 | ✓ Dominant |
-| Colluder | 0.2878 | ✓ Neutralized by φ |
-| Deserter | 0.2242 | ✓ Neutralized by μ |
-| Free rider | 0.1135 | ✓ Neutralized by δ |
-
-**All 3 theoretical propositions verified at 100.00%** across 1,000 independent simulations.
-
----
-
-## Repository Structure
+## Repository structure
 
 ```
 ctp/
-├── README.md                          ← this file
-├── README_FR.md                       ← French version
-│
-├── paper/
-│   ├── CTP_v0.1_Ange_AWALA_EN.pdf    ← English article (22 pages)
-│   ├── CTP_v0.1_Ange_AWALA_FR.pdf    ← French article (23 pages)
-│   ├── CTP_v0.1_Ange_AWALA_EN.tex    ← LaTeX source (EN)
-│   └── CTP_v0.1_Ange_AWALA_FR.tex    ← LaTeX source (FR)
-│
-├── simulation/
-│   ├── CTP_MonteCarlo_v0.1.py        ← Full Monte Carlo simulation
-│   └── results/
-│       └── CTP_simulation_v0.1.png   ← Academic-style figures
-│
-├── contracts/
-│   ├── CTPCore_v0.1.sol              ← Solidity smart contract
-│   └── test/
-│       └── CTPCore.test.js           ← Hardhat test suite
-│
-└── docs/
-    ├── whitepaper.md                 ← Non-technical overview
-    ├── philosophy.md                 ← Ubuntu, tontines, vision
-    └── roadmap.md                    ← v0.1 → v0.2 → production
+├── article-v2.0/          ← reference article (FR + EN, PDF + LaTeX), figures, results
+├── simulations-v2.0/      ← script producing every number and figure of the article
+├── historique/            ← CTP Core v0.1 and v1.1 (obsolete, kept for traceability)
+├── .github/               ← issue/PR templates, CI (article build, reproducibility check)
+├── CITATION.cff
+└── CONTRIBUTING.md
 ```
 
 ---
 
-## Quick Start
-
-### Run the simulation
+## Quick start
 
 ```bash
-# Clone the repository
-git clone https://github.com/angeawalabj/ctp.git
-cd ctp
+git clone https://github.com/opensciencec/ctp.git && cd ctp
+pip install -r simulations-v2.0/requirements.txt
 
-# Install dependencies
-pip install numpy matplotlib scipy
-
-# Run Monte Carlo validation (1000 simulations × 52 periods)
-python simulation/CTP_MonteCarlo_v0.1.py
+python simulations-v2.0/ctp_core_v2_experiments.py figures   # redraw all figures (seconds)
+python simulations-v2.0/ctp_core_v2_experiments.py E3        # recompute one experiment
+python simulations-v2.0/ctp_core_v2_experiments.py           # recompute everything (~30 min, 8 cores)
 ```
 
-### Test the smart contract
-
-```bash
-# Install Node.js dependencies
-cd contracts
-npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
-
-# Compile
-npx hardhat compile
-
-# Run tests
-npx hardhat test
-
-# Deploy on testnet (Polygon Mumbai)
-PRIVATE_KEY=your_key npx hardhat run scripts/deploy.js --network mumbai
-```
-
-### Test on Remix (no installation)
-
-1. Go to [remix.ethereum.org](https://remix.ethereum.org)
-2. Create `CTPCore.sol` and paste the contract
-3. Compile with Solidity 0.8.24
-4. Deploy on JavaScript VM (free testnet)
-5. Call functions directly in the interface
+Read: [`article-v2.0/CTP_Core_v2.0_EN.pdf`](article-v2.0/CTP_Core_v2.0_EN.pdf) · [`article-v2.0/CTP_Core_v2.0_FR.pdf`](article-v2.0/CTP_Core_v2.0_FR.pdf)
 
 ---
 
-## Recommended Parameters
-
-| Parameter | Role | Value | Constraint |
-|---|---|---|---|
-| η (eta) | Contribution gain rate | 0.05 | η ≪ κ |
-| κ (kappa) | Default penalty | 0.15 | κ ≫ η |
-| δ (delta) | Inactivity depreciation | 0.02 | δ > 0 |
-| φ (phi) | Witness accountability | 0.15 | φ ≥ 3η |
-| λ (lambda) | Base portability | 0.20 | λ ∈ [0,1] |
-| μ (mu) | Migration penalty | 0.70 | μ ∈ [0.6, 0.8] |
-| k_min | Minimum Witnesses | 3 | k_min ≥ 3 |
-| α_k | Adaptive fraction | 0.20 | α_k ∈ (0,1) |
-
----
-
-## Related Work
-
-CTP builds on and complements:
-
-- **EigenTrust** (Kamvar et al., 2003) — foundational P2P reputation algorithm
-- **PeerTrust** (Xiong & Liu, 2004) — credibility-weighted trust
-- **Trust as a Computational Concept** (Marsh, 1994) — founding thesis
-- **Daoudi, Lefrançois & Zimmermann (2026)** — formal contract negotiation in data spaces. CTP provides the actor reliability mechanism their framework lacks; their ODRL ontologies provide the formal basis for CTP's sim(j,j') function.
-- **Ardener (1964)** — rotating savings and credit associations
-- **Ostrom (1990)** — governing the commons
-
----
-
-## Roadmap
-
-### v0.1 — Current ✓
-- Complete conceptual specification
-- Rigorous mathematical model
-- Game theory analysis
-- Monte Carlo validation (1,000 simulations)
-- Solidity MVP smart contract
-- Article published on Zenodo (FR + EN)
-
-### v0.2 — Planned
-- Capital of Forgiveness — adaptive gain rate η_i(t)
-- Formal sim(j,j') — directional similarity from member flows
-- Algorithmic complexity analysis — gas cost table
-- Marsh (1994) formally positioned
-- Explicit limitations section
-
-### v0.3 — Future
-- CTP-Finance module (micro-finance allocations)
-- Combination with Daoudi et al. (data spaces)
-- Calibration on real tontine data (West Africa)
-- Multi-Node global score on-chain
-
----
-
-## Ethical Principles
-
-These are not recommendations — they are **constitutive of the protocol**.  
-Any implementation that violates them is not CTP-compliant.
+## Ethical principles
 
 1. **Community autonomy** — strengthens self-governance without institutional dependency
-2. **Reciprocity** — long-term parasitism is mechanically impossible
+2. **Reciprocity** — the mechanism is calibrated to make long-term free riding unprofitable
 3. **Repairable short memory** — a past default does not condemn for life
 4. **Rule transparency, personal confidentiality** — rules are public, scores are not (unless the Node decides otherwise)
-5. **Non-commodification of score** — TrustScore is not a token, not an asset, not tradeable
-6. **Data decentralization** — each Node manages its own data
+5. **Non-commodification of score** — the score is not a token, not an asset, not tradeable
+6. **Data decentralisation** — each Node manages its own data
 
 ---
 
-## Citing This Work
+## Citing this work
+
+See [`CITATION.cff`](CITATION.cff). Founding version:
 
 ```bibtex
 @misc{awala2026ctp,
-  author       = {Awala, Ange},
-  title        = {{CommunityTrust Protocol (CTP v0.1): A Universal
-                   Community Trust Protocol Inspired by African Tontines}},
-  year         = {2026},
-  doi          = {10.5281/zenodo.20031237},
-  url          = {https://doi.org/10.5281/zenodo.20031237},
-  publisher    = {Zenodo},
-  note         = {OpenScience Community. License: CC BY-SA 4.0}
+  author    = {Awala, Ange},
+  title     = {{CommunityTrust Protocol (CTP v0.1)}},
+  year      = {2026},
+  doi       = {10.5281/zenodo.20031237},
+  publisher = {Zenodo}
 }
 ```
 
@@ -288,14 +131,7 @@ Any implementation that violates them is not CTP-compliant.
 
 ## Contributing
 
-CTP is an open protocol. Contributions are welcome:
-
-- **Test** the protocol on concrete use cases
-- **Propose** formal modifications via the GovSignal mechanism
-- **Contribute** to the open source implementation
-- **Share** calibration data from real community contexts
-
-Open an issue or send a pull request. For significant changes, open a discussion first.
+Report an error with the **Erratum** issue template, ask with **Question**, or open a pull request — see [`CONTRIBUTING.md`](CONTRIBUTING.md). Every number must be reproducible; published errors are corrected **and** recorded in the erratum.
 
 ---
 
@@ -305,13 +141,7 @@ Open an issue or send a pull request. For significant changes, open a discussion
 
 Copyright © 2026 Ange AWALA — OpenScience Community
 
----
-
 <div align="center">
-
-**OpenScience Community**
-
-[ange.awala.bj@gmail.com](mailto:ange.awala.bj@gmail.com) · [opensciencec@gmail.com](mailto:opensciencec@gmail.com) · [ORCID](https://orcid.org/0009-0006-0220-3006) · [Zenodo DOI](https://doi.org/10.5281/zenodo.20031237)
 
 *"I am because we are"*
 
